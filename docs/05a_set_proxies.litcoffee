@@ -46,7 +46,7 @@ Returns a new `SetProxy` tracking `base`.
     test "SetSorts are sorted proxies of their Sets", ->
       batmobile = new Batman.Object(name: "Batmobile", wheelCount: 4)
       batcycle = new Batman.Object(name: "Batcycle", wheelCount: 2)
-      vehicles = new Batman.Set(batmobile, batcycle)
+      vehicles = new Batman.Set([batmobile, batcycle])
 
       vehiclesByWheelCount1 = new Batman.SetSort(vehicles, 'wheelCount') # order defaults to 'asc'
       vehiclesByWheelCount2 = vehicles.sortedBy('wheelCount')
@@ -78,7 +78,7 @@ Returns the key used to sort members of the `SetSort`, as defined in the constru
     test "get sortedByDescending creates a descending SetSort", ->
       batmobile = new Batman.Object(name: "Batmobile", wheelCount: 4)
       batcycle = new Batman.Object(name: "Batcycle", wheelCount: 2)
-      vehicles = new Batman.Set(batmobile, batcycle)
+      vehicles = new Batman.Set([batmobile, batcycle])
 
       vehiclesByWheelCountDescending1 = new Batman.SetSort(vehicles, 'wheelCount', 'desc')
       vehiclesByWheelCountDescending2 = vehicles.get('sortedByDescending.wheelCount')
