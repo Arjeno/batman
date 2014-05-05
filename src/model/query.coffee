@@ -45,6 +45,23 @@ class Batman.Query extends Batman.Object
   load: (callback) ->
     @base.search(this, callback)
 
+  only: (onlyOptions...) ->
+    options = @get('options')
+
+    for option in @constructor.OPTION_KEYS
+      if onlyOptions.indexOf(option) == -1
+        @unset("options.#{option}")
+
+    return this
+
+  except: (exceptOptions...) ->
+    options = @get('options')
+
+    for option in exceptOptions
+      @unset("options.#{option}")
+
+    return this
+
   toJSON: -> @options.toJSON()
 
   toParams: ->
@@ -58,8 +75,8 @@ class Batman.Query extends Batman.Object
 
     params
 
-  for name in @OPTION_KEYS
-    @::observe "options.#{name}", ->
+  for option in @OPTION_KEYS
+    @::observe "options.#{option}", ->
       @set('params', @toParams())
 
   _singleOrMultipleConstraints: (key, value) ->

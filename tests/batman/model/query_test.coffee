@@ -48,3 +48,15 @@ test "Query::toParams returns an Object with nested where and not", ->
 test "Query::not sets values with a bang", ->
   @query.not(foo: 'bar')
   equal @query.get('options.not').foo, '!bar'
+
+test "Query::only deletes other option keys", ->
+  @query.where(foo: 'bar').limit(10)
+  @query.only('limit')
+
+  equal @query.get('options.where'), undefined
+
+test "Query::except deletes given option keys", ->
+  @query.where(foo: 'bar').limit(10)
+  @query.except('where')
+
+  equal @query.get('options.where'), undefined
