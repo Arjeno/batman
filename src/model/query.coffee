@@ -1,7 +1,7 @@
 #= require ../object
 
 class Batman.Query extends Batman.Object
-  @OPTION_KEYS = ['limit', 'offset', 'order', 'where', 'distinct']
+  @OPTION_KEYS = ['limit', 'offset', 'order', 'where', 'distinct', 'not']
 
   constructor: (@base, options = {}) ->
     options.where ||= {}
@@ -9,14 +9,18 @@ class Batman.Query extends Batman.Object
     @set('params', @toJSON())
 
   where: (key, value) ->
-    constraints = {}
-
-    if Batman.typeOf(key) == 'String'
-      constraints[key] = value
-    else
-      constraints = key
+    constraints = @_singleOrMultipleConstraints(key, value)
 
     @set('options.where', Batman.mixin({}, @get('options.where'), constraints))
+    return this
+
+  not: (key, value) ->
+    constraints = @_singleOrMultipleConstraints(key, value)
+
+    for key, value of constraints
+      constraints[key] = "!#{value}"
+
+    @set('options.not', Batman.mixin({}, @get('options.not'), constraints))
     return this
 
   uniq: ->
@@ -45,14 +49,28 @@ class Batman.Query extends Batman.Object
 
   toParams: ->
     params = @toJSON()
-    where = params.where
-    delete(params.where)
 
-    Batman.mixin(params, where)
+    for type in ['where', 'not']
+      data = params[type]
+      delete(params[type])
+
+      params = Batman.mixin(params, data)
+
+    params
 
   for name in @OPTION_KEYS
     @::observe "options.#{name}", ->
       @set('params', @toParams())
+
+  _singleOrMultipleConstraints: (key, value) ->
+    constraints = {}
+
+    if Batman.typeOf(key) == 'String'
+      constraints[key] = value
+    else
+      constraints = key
+
+    constraints
 
 Batman.Queryable =
   initialize: ->
