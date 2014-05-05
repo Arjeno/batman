@@ -6,6 +6,7 @@ class Batman.Query extends Batman.Object
   constructor: (@base, options = {}) ->
     options.where ||= {}
     @set('options', new Batman.Object(options))
+    @set('params', @toJSON())
 
   where: (key, value) ->
     constraints = {}
@@ -41,6 +42,17 @@ class Batman.Query extends Batman.Object
     @base.search(this, callback)
 
   toJSON: -> @options.toJSON()
+
+  toParams: ->
+    params = @toJSON()
+    where = params.where
+    delete(params.where)
+
+    Batman.mixin(params, where)
+
+  for name in @OPTION_KEYS
+    @::observe "options.#{name}", ->
+      @set('params', @toParams())
 
 Batman.Queryable =
   initialize: ->

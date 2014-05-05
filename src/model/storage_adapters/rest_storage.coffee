@@ -238,12 +238,7 @@ class Batman.RestStorage extends Batman.StorageAdapter
         @request(env, next)
 
   search: @skipIfError (env, next) ->
-    query = env.options.query?.toJSON()
-
-    where = query.where
-    delete(query.where)
-
-    env.options.data = Batman.mixin(query, where)
+    env.options.data = env.options.query?.toParams()
     @request(env, next)
 
   @::after 'all', (env, next) ->
