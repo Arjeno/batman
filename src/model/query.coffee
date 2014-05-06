@@ -6,7 +6,7 @@ class Batman.Query extends Batman.Object
   constructor: (@base, options = {}) ->
     options.where ||= {}
     @set('options', new Batman.Object(options))
-    @set('params', @toJSON())
+    @set('params', @toParams())
 
   where: (key, value) ->
     constraints = @_singleOrMultipleConstraints(key, value)
@@ -37,8 +37,6 @@ class Batman.Query extends Batman.Object
     @base.search(this, callback)
 
   only: (onlyOptions...) ->
-    options = @get('options')
-
     for option in @constructor.OPTION_KEYS
       if onlyOptions.indexOf(option) == -1
         @unset("options.#{option}")
@@ -46,8 +44,6 @@ class Batman.Query extends Batman.Object
     return this
 
   except: (exceptOptions...) ->
-    options = @get('options')
-
     for option in exceptOptions
       @unset("options.#{option}")
 
