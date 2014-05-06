@@ -139,14 +139,8 @@ class Batman.Model extends Batman.Object
     @loadWithOptions options, callback
 
   @search: (query, callback) ->
-      @fire 'loading', query
-      @_doStorageOperation 'search', {query}, (err, records, env) =>
-        if err?
-          @fire('error', err)
-          callback?(err, [])
-        else
-          @fire('loaded', records, env)
-          callback?(err, records, env)
+    options = { data: query.toParams() }
+    @loadWithOptions(options, callback)
 
   @loadWithOptions: (options, callback) ->
     @fire 'loading', options
