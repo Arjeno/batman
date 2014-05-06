@@ -97,12 +97,3 @@ Batman.Queryable =
           query = new Batman.Query(this)
           query[name].apply(query, arguments)
           return query
-
-Batman.QueryAccess =
-  initialize: ->
-    for name in Batman.Query.OPTION_KEYS
-      do (name) =>
-        @[name] = ->
-          query = @get('query')
-          query[name].apply(query, arguments)
-          return this
