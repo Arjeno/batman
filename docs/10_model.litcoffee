@@ -28,6 +28,7 @@ To allow for readable and chainable queries Batman introduces `Batman.Query`.
             'posts2': {id: 2, archived: false}
             'posts3': {id: 3, archived: true}
 
+      records = false
       posts = Post.where(archived: true)
       posts.load (err, result) ->
         throw err if err
