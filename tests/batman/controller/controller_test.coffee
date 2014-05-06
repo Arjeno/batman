@@ -439,6 +439,17 @@ test 'dispatching params with a hash does not scroll to that hash if autoScrollT
     @controller.dispatch 'show', {'#': 'foo'}
     ok !spy.called
 
+test "setUrlParams() calls currentParams update and updateUrl", ->
+  params = new Batman.Params
+  params.update = createSpy()
+  params.updateUrl = createSpy()
+
+  Batman.currentApp.set('currentParams', params)
+  @controller.setUrlParams(page: 5)
+
+  equal params.update.callCount, 1
+  equal params.updateUrl.callCount, 1
+
 QUnit.module 'Batman.Controller error handling',
   setup: ->
     class @CustomError extends Batman.Object

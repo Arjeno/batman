@@ -176,3 +176,13 @@ class Batman.Controller extends Batman.Object
   _viewClassForAction: (action) ->
     classPrefix = @get('routingKey').replace('/', '_')
     Batman.currentApp?[Batman.helpers.camelize("#{classPrefix}_#{action}_view")] || Batman.View
+
+  @accessor 'currentParams', -> Batman.currentApp.get('currentParams')
+
+  setUrlParam: (k, v, soft = true, params = {}) ->
+    params[k] = v
+    @setUrlParams(params, soft)
+
+  setUrlParams: (params, soft = true) ->
+    @get('currentParams').update(params)
+    @get('currentParams').updateUrl(soft)

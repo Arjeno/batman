@@ -63,3 +63,11 @@ test "back and forward browser events should both cause a dispatch", ->
   navigator.handleCurrentLocation()
 
   equal dispatchSpy.callCount, 3
+
+test "softRedirect() creates correct uri and calls pushState", ->
+  navigator = new Batman.Navigator
+  navigator.pushState = createSpy()
+  navigator.softRedirect({ foo: 'bar' })
+
+  equal @navigator.pushState.callCount, 1
+  deepEqual @navigator.pushState.lastCallArguments, [null, '', "?foo=bar"]

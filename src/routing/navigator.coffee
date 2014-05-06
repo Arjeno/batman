@@ -64,6 +64,19 @@ class Batman.Navigator
 
     path
 
+  softRedirect: (params, replaceState=false) ->
+    path = params.path or '/'
+
+    delete(params.path)
+
+    uri = new Batman.URI(path)
+    uri.queryParams = params
+    path = uri.toString()
+
+    @[if replaceState then 'replaceState' else 'pushState'](null, '', path)
+
+    path
+
   push: (params) ->
     Batman.developer.deprecated("Navigator::push", "Please use Batman.redirect({}) instead.")
     @redirect(params)
