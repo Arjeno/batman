@@ -6,6 +6,49 @@ _Note_: This documentation uses the term _model_ to refer to the class `Model`
 or a `Model` subclass, and the term _record_ to refer to one instance of a
 model.
 
+## Batman.Query
+
+To allow for readable and chainable queries Batman introduces `Batman.Query`.
+
+    test 'Batman.Query chains methods', ->
+      class Post extends Batman.Model
+        @resourceName: 'post'
+        @persist TestStorageAdapter
+
+      posts = Post.where(archived: true).limit(10).offset(20)
+      ok posts instanceof Batman.Query
+
+    asyncTest 'Batman.Query::load retrieves matching records from the storage adapter', ->
+      class Post extends Batman.Model
+        @resourceName: 'post'
+        @encode 'archived'
+        @persist TestStorageAdapter,
+          storage:
+            'posts1': {id: 1, archived: true}
+            'posts2': {id: 2, archived: false}
+            'posts3': {id: 3, archived: true}
+
+      records = false
+      posts = Post.where(archived: true)
+      posts.load (err, result) ->
+        throw err if err
+        records = result
+
+      delay ->
+        equal records.length, 2
+        equal records[0].get('id'), 1
+        equal records[1].get('id'), 3
+
+The available methods are:
+
+- `where`: Retrieves records with given options.
+- `limit`: Retrieves records with a given limit.
+- `offset`: Retrieves records from a given offset.
+- `order`: Retrieves records in a specific order.
+- `distinct`: Retrieves distinct records.
+
+All these methods are passed as options to the configured `StorageAdapter`.
+
 ## @.primaryKey[= "id"] : String
 
 Defines the `Model`'s primary key. This attribute will be used for determining:

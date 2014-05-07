@@ -263,4 +263,3 @@ class Batman.RestStorage extends Batman.StorageAdapter
       error.request = request
       error.env = env
     error
-
