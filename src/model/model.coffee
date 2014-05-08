@@ -139,7 +139,10 @@ class Batman.Model extends Batman.Object
     @loadWithOptions options, callback
 
   @search: (query, callback) ->
-    options = { data: query.toParams() }
+    options =
+      data: query.toParams()
+      action: query.get('options.action')
+
     @loadWithOptions(options, callback)
 
   @loadWithOptions: (options, callback) ->
