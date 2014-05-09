@@ -49,16 +49,18 @@ class Batman.Query extends Batman.Object
 
     return this
 
+  action: (action) ->
+    @set('options.action', action)
+    return this
+
   toJSON: -> @options.toJSON()
 
   toParams: ->
     params = @toJSON()
+    params = Batman.mixin(params, params.where)
 
-    for type in ['where']
-      data = params[type]
+    for type in ['where', 'action']
       delete(params[type])
-
-      params = Batman.mixin(params, data)
 
     params
 
