@@ -46,6 +46,9 @@ The available methods are:
 - `offset`: Retrieves records from a given offset.
 - `order`: Retrieves records in a specific order.
 - `distinct`: Retrieves distinct records.
+- `action`: Searches against a specific action other than index.
+- `only`: Only uses query methods in arguments
+- `except`: Uses all query methods specified other than arguments
 
 All these methods are passed as options to the configured `StorageAdapter`.
 
