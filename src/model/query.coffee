@@ -101,4 +101,4 @@ Batman.Queryable =
       do (name) =>
         @[name] = ->
           query = new Batman.Query(this)
-          query[name].apply(query, arguments)
+          query["_#{name}"].apply(query, arguments)
