@@ -102,4 +102,3 @@ Batman.Queryable =
         @[name] = ->
           query = new Batman.Query(this)
           query[name].apply(query, arguments)
-          return query

@@ -25,7 +25,12 @@ test "Mixing in Queryable defines methods which return new Queries", ->
   class Test extends Batman.Object
     @classMixin Batman.Queryable
 
-  ok Test.limit(5) instanceof Batman.Query
+  query = Test.limit(5)
+  params = query.toParams()
+
+  ok query instanceof Batman.Query
+
+  equal params.limit, 5
 
 test "Query::toParams returns an Object with nested where", ->
   query = @query.where(foo: 'bar')
