@@ -364,8 +364,8 @@ asyncTest 'should allow filtered keypaths as arguments to context', 1, ->
 asyncTest 'should allow filtered keypaths as arguments to context and filters to be performed in the context', 2, ->
   context = Batman
     foo: Batman
-      baz: new Batman.Set({foo: 'bar'}, {foo: 'baz'})
-      qux: new Batman.Set({foo: '1'}, {foo: '2'})
+      baz: new Batman.Set([{foo: 'bar'}, {foo: 'baz'}])
+      qux: new Batman.Set([{foo: '1'}, {foo: '2'}])
     bar: 'baz'
 
   helpers.render '<div data-context-corge="foo | get bar"><div id="test" data-bind="corge | map \'foo\' | join \', \'"></div></div>', context, (node, view) ->
@@ -456,3 +456,52 @@ asyncTest 'withArguments with Batman.TerminalAccessible', ->
     equal node[0].innerHTML, "2"
     QUnit.start()
 
+asyncTest 'toggle filter returns a function to toggle the value', 2, ->
+  context = foo: Batman(bar: true)
+
+  helpers.render '<a data-event-click="foo.bar | toggle">', context, (node) ->
+    helpers.triggerClick(node[0])
+    equal context.foo.get('bar'), false
+    helpers.triggerClick(node[0])
+    equal context.foo.get('bar'), true
+    QUnit.start()
+
+asyncTest 'increment filter returns a function to increment the value', 2, ->
+  context = foo: Batman()
+
+  helpers.render '<a data-event-click="foo.bar | increment">', context, (node) ->
+    helpers.triggerClick(node[0])
+    equal context.foo.get('bar'), 1
+    helpers.triggerClick(node[0])
+    equal context.foo.get('bar'), 2
+    QUnit.start()
+
+asyncTest 'increment filter accepts other change values', 2, ->
+  context = foo: Batman()
+
+  helpers.render '<a data-event-click="foo.bar | increment 3">', context, (node) ->
+    helpers.triggerClick(node[0])
+    equal context.foo.get('bar'), 3
+    helpers.triggerClick(node[0])
+    equal context.foo.get('bar'), 6
+    QUnit.start()
+
+asyncTest 'decrement filter returns a function to increment the value', 2, ->
+  context = foo: Batman(bar: 10)
+
+  helpers.render '<a data-event-click="foo.bar | decrement">', context, (node) ->
+    helpers.triggerClick(node[0])
+    equal context.foo.get('bar'), 9
+    helpers.triggerClick(node[0])
+    equal context.foo.get('bar'), 8
+    QUnit.start()
+
+asyncTest 'decrement filter accepts other change values', 2, ->
+  context = foo: Batman()
+
+  helpers.render '<a data-event-click="foo.bar | decrement 3">', context, (node) ->
+    helpers.triggerClick(node[0])
+    equal context.foo.get('bar'), -3
+    helpers.triggerClick(node[0])
+    equal context.foo.get('bar'), -6
+    QUnit.start()

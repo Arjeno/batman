@@ -17,6 +17,7 @@ QUnit.module "Batman.Model hasMany Associations",
         id: 1
 
     namespace.StringyProduct = class @StringyProduct extends Batman.Model
+      coerceIntegerPrimaryKey: false
       @encode 'id' # they're gonna be integer-y strings: "1", "2", etc
       @encode 'price'
       @belongsTo 'store', namespace: namespace, inverseOf: "stringyProducts"
@@ -324,7 +325,7 @@ asyncTest "hasMany associations are saved via the parent model", 5, ->
   store = new @Store name: 'Zellers'
   product1 = new @Product name: 'Gizmo'
   product2 = new @Product name: 'Gadget'
-  store.set 'products', new Batman.Set(product1, product2)
+  store.set 'products', new Batman.Set([product1, product2])
 
   storeSaveSpy = spyOn store, 'save'
   store.save (err, record) =>
@@ -599,14 +600,18 @@ asyncTest "saved hasMany models should decode their child records based on ID", 
     equal six.get('price'), 60
     QUnit.start()
 
-asyncTest "integer-ish, string `id` doesn't cause the same items to be loaded twice", 2, ->
+asyncTest "integer-ish, string `id` doesn't cause the same items to be loaded twice", 5, ->
   @Store.find 1, (err, store) ->
     throw err if err
     sp = store.get("stringyProducts")
     delay ->
       equal sp.length, 3
-      store_json = store.toJSON() # get those stringyProduct ids as strings
-      store.fromJSON(store_json)
+      storeJSON = store.toJSON() # get those stringyProduct ids as strings
+      stringIds = (prod.id for idx, prod of storeJSON.stringyProducts)
+      strictEqual stringIds[0] , "1"
+      strictEqual stringIds[1] , "2"
+      strictEqual stringIds[2] , "15"
+      store.fromJSON(storeJSON)
       delay ->
         deepEqual sp.length, 3
 
