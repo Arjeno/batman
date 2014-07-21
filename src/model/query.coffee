@@ -1,12 +1,18 @@
 #= require ../object
 
 class Batman.Query extends Batman.Object
-  @OPTION_KEYS = ['limit', 'offset', 'order', 'where', 'distinct']
+  @OPTION_KEYS = ['limit', 'offset', 'order', 'where', 'distinct', 'action', 'uniq']
+  @METHODS = @OPTION_KEYS.concat(['only', 'except'])
 
   constructor: (@base, options = {}) ->
     options.where ||= {}
     @set('options', new Batman.Object(options))
     @set('params', @toParams())
+
+  duplicate: (block) ->
+    options = Batman.mixin({}, @get('options').toJSON())
+    query = new Batman.Query(@base, options)
+    block.call(query)
 
   where: (key, value) ->
     constraints = @_singleOrMultipleConstraints(key, value)
@@ -33,9 +39,6 @@ class Batman.Query extends Batman.Object
     @set('options.distinct', true)
     return this
 
-  load: (callback) ->
-    @base.search(this, callback)
-
   only: (onlyOptions...) ->
     for option in @constructor.OPTION_KEYS
       if onlyOptions.indexOf(option) == -1
@@ -52,6 +55,20 @@ class Batman.Query extends Batman.Object
   action: (action) ->
     @set('options.action', action)
     return this
+
+  for name in @METHODS
+    alias = "_#{name}"
+    @::[alias] = @::[name]
+
+    do (name) =>
+      @::[name] = ->
+        args = arguments
+
+        @duplicate ->
+          @["_#{name}"].apply(@, args)
+
+  load: (callback) ->
+    @base.search(this, callback)
 
   toJSON: -> @options.toJSON()
 
@@ -84,5 +101,4 @@ Batman.Queryable =
       do (name) =>
         @[name] = ->
           query = new Batman.Query(this)
-          query[name].apply(query, arguments)
-          return query
+          query["_#{name}"].apply(query, arguments)
