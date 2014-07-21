@@ -14,7 +14,7 @@ QUnit.module "Batman.Model::transaction",
       @resourceName: 'test'
       @persist Batman.RestStorage
 
-      @encode 'banana'
+      @encode 'banana', 'money'
       @validate 'banana', presence: true
       @validate 'money', numeric: true, allowBlank: true
       @hasOne 'testNested', namespace: scope
@@ -52,13 +52,55 @@ test 'applyChanges applies the changes in the transaction object to the base', -
   @transaction.applyChanges()
   equal @base.get('banana'), 'rama'
 
+test 'applyChanges filters changes with only', ->
+  @transaction.set('banana', 'rama')
+  @transaction.set('money', 1)
+
+  @transaction.applyChanges([], {only: "money"})
+
+  equal @base.get('money'), 1
+  equal @base.get('banana'), undefined
+
+test 'applyChanges filters changes with except', ->
+  @transaction.set('banana', 'orange')
+  @transaction.set('money', 42)
+
+  @transaction.applyChanges([], {except: ["money"]})
+  equal @base.get('money'), undefined
+  equal @base.get('banana'), "orange"
+
 test 'save applies the changes in the transaction object and saves the object', ->
-  s = sinon.stub(Batman.Model.prototype, '_doStorageOperation', (callback) -> callback?(null, this))
+  s = sinon.stub(Batman.Model.prototype, '_doStorageOperation', (options, payload, callback) -> callback?(null, this))
   @transaction.set('banana', 'rama')
   @transaction.save()
   s.restore()
 
   equal @base.get('banana'), 'rama'
+
+test 'save {only} also filters applyChanges attributes', ->
+  s = sinon.stub(Batman.Model.prototype, '_doStorageOperation', (options, payload, callback) -> callback?(null, this))
+  # Simulate a loaded record
+  @base.set('id', 5)
+  @TestModel._mapIdentity(@base)
+  @transaction.set('id', 5)
+
+  @transaction.set('banana', 'rama')
+  @transaction.set('money', 25)
+  @transaction.save({only: ["money"]}, ->)
+  s.restore()
+
+  equal @base.get('banana'), undefined
+  equal @base.get('money'), 25
+
+test 'save {except} also filters applyChanges attributes', ->
+  s = sinon.stub(Batman.Model.prototype, '_doStorageOperation', (options, payload, callback) -> callback?(null, this))
+  @transaction.set('banana', 'rama')
+  @transaction.set('money', 25)
+  @transaction.save({except: "money"}, ->)
+  s.restore()
+
+  equal @base.get('banana'), "rama"
+  equal @base.get('money'), undefined
 
 test 'errors on the transaction object are not applied to the base object', ->
   @transaction.validate()
@@ -233,3 +275,26 @@ asyncTest 'polymorphic association sets get transactions', 8, ->
       metafieldsTransaction.applyChanges()
       ok store.get('metafields.length'), 3, 'new items are added'
       ok store.get('metafields.first.key') == "Transaction metafield", 'item changes are applied'
+
+test 'the same association set doesnt get applyChanges called twice', ->
+  oldApplyChanges = Batman.Transaction.applyChanges
+
+  changesSpy = Batman.Transaction.applyChanges = createSpy(Batman.Transaction.applyChanges)
+  @base.get('apples.first').set('ownerApples', @base.get('apples'))
+  equal @base.get('attributes.apples.first.ownerApples._batmanID'), @base.get('attributes.apples._batmanID'), "it's the same association set"
+
+  transaction = @base.transaction()
+  equal transaction.get('attributes.apples.first.ownerApples._batmanID'), transaction.get('attributes.apples._batmanID'), "it's the same transactionAssociationSet"
+  ###
+    altogether 7 objects should be found:
+    base -> --- apple1 --> base
+        \   \__ apple2 --> base
+         \______ bob   --> base
+
+    shouldn't find base.apple1.ownerApples (which would add 2 calls to applyChanges)
+  ###
+  desiredCalls = 7
+  transaction.applyChanges()
+  equal changesSpy.calls.length, desiredCalls
+
+  Batman.Transaction.applyChanges = oldApplyChanges

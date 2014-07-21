@@ -180,8 +180,17 @@ Batman.Filters =
 
   escape: buntUndefined(Batman.escapeHTML)
 
+  toggle: (rhs, binding) ->
+    -> binding.toggle('unfilteredValue')
+
+  increment: (rhs, change, binding) ->
+    -> binding.increment('unfilteredValue', change)
+
+  decrement: (rhs, change, binding) ->
+    -> binding.decrement('unfilteredValue', change)
+
 do ->
-  for k in ['capitalize', 'singularize', 'underscore', 'camelize']
+  for k in ['capitalize', 'titlelize', 'singularize', 'underscore', 'camelize', 'toSentence', 'ordinalize']
     Batman.Filters[k] = buntUndefined Batman.helpers[k]
 
 Batman.developer.addFilters()

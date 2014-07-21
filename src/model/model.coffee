@@ -12,6 +12,7 @@ class Batman.Model extends Batman.Object
   @storageKey: null
 
   @primaryKey: 'id'
+  coerceIntegerPrimaryKey: true
 
   # Pick one or many mechanisms with which this model should be persisted. The mechanisms
   # can be already instantiated or just the class defining them.
@@ -83,10 +84,10 @@ class Batman.Model extends Batman.Object
       if @resourceName?
         @resourceName
       else if @::resourceName?
-        Batman.developer.error("Please define the resourceName property of the #{Batman.functionName(@)} on the constructor and not the prototype.") if Batman.config.minificationErrors
+        Batman.developer.error("Please define the resourceName property of the #{Batman.functionName(@)} on the constructor and not the prototype. (For example, `@resourceName: '#{Batman.helpers.underscore(Batman.functionName(@))}'`)") if Batman.config.minificationErrors
         @::resourceName
       else
-        Batman.developer.error("Please define #{Batman.functionName(@)}.resourceName in order for your model to be minification safe.") if Batman.config.minificationErrors
+        Batman.developer.error("Please define #{Batman.functionName(@)}.resourceName in order for your model to be minification safe. (For example, `@resourceName: '#{Batman.helpers.underscore(Batman.functionName(@))}'`)") if Batman.config.minificationErrors
         Batman.helpers.underscore(Batman.functionName(@))
 
   @classAccessor 'all',
@@ -179,6 +180,8 @@ class Batman.Model extends Batman.Object
     @_makeOrFindRecordsFromData(array)
 
   @_loadIdentity: (id) ->
+    if @coerceIntegerPrimaryKey
+      id = Batman.helpers.coerceInteger(id)
     @get('loaded.indexedByUnique.id').get(id)
 
   @_loadRecord: (attributes) ->
@@ -229,11 +232,11 @@ class Batman.Model extends Batman.Object
         records[index] = existing
       else
         newRecords.push record
-    @get('loaded').add(newRecords...) if newRecords.length
+    @get('loaded').addArray(newRecords) if newRecords.length
     return records
 
   @_doStorageOperation: (operation, options, callback) ->
-    Batman.developer.assert @::hasStorage(), "Can't #{operation} model #{Batman.functionName(@constructor)} without any storage adapters!"
+    Batman.developer.assert @::hasStorage(), "Can't #{operation} model #{Batman.functionName(@)} without any storage adapters!"
     adapter = @::_batman.get('storage')
     adapter.perform(operation, this, options, callback)
 
@@ -315,9 +318,11 @@ class Batman.Model extends Batman.Object
         @get(primaryKey)
     set: (key, value) ->
       primaryKey = @constructor.primaryKey
+      if @coerceIntegerPrimaryKey
+        value = Batman.helpers.coerceInteger(value)
       if primaryKey == 'id'
         @_willSet(key)
-        core.set.apply(@, arguments)
+        core.set.call(@, key, value)
       else
         @set(primaryKey, value)
 
@@ -453,7 +458,8 @@ class Batman.Model extends Batman.Object
               record._withoutDirtyTracking ->
                 associations.getByType('hasOne')?.forEach (association, label) -> association.apply(err, record)
                 associations.getByType('hasMany')?.forEach (association, label) -> association.apply(err, record)
-            record = @constructor._mapIdentity(record)
+            if !record.isTransaction # don't let the transaction polute the true instance
+              record = @constructor._mapIdentity(record)
             @get('lifecycle').startTransition endState
           else
             if err instanceof Batman.ErrorsSet
@@ -469,7 +475,8 @@ class Batman.Model extends Batman.Object
       [options, callback] = [{}, options]
 
     if @get('lifecycle').destroy()
-      @_doStorageOperation 'destroy', {data: options}, (err, record, env) =>
+      payload = Batman.mixin({}, options, {data: options})
+      @_doStorageOperation 'destroy', payload, (err, record, env) =>
         unless err
           @constructor.get('loaded').remove(@)
           @get('lifecycle').destroyed()
@@ -595,7 +602,7 @@ class Batman.Model extends Batman.Object
         attributes[key] = newValues
 
       else if Batman.typeOf(value) is 'Object'
-        Batman.developer.warn "You're passing a mutable object (#{key}, #{value.constructor.name}) in a #{@constructor.name} transaction:", value
+        Batman.developer.warn "You're passing a mutable object (#{key}, #{Batman.functionName(value.constructor)}) in a #{@constructor.name} transaction:", value
 
     transaction._withoutDirtyTracking -> transaction.updateAttributes(attributes)
     transaction._batman.base = this
