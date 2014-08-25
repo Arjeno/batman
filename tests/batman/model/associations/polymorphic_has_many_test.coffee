@@ -17,6 +17,15 @@ asyncTest "hasMany associations are loaded from remote", 5, ->
       equal array[1].get('key'), "Store metafield 2"
       equal array[1].get('id'), 3
 
+asyncTest "::load returns a promise that resolves with an array of records", 1, ->
+  @Store.find 1, (err, store) =>
+    throw err if err
+    store.get('metafields').load()
+      .then (records) ->
+        equal records.length, 2
+      .then ->
+        QUnit.start()
+
 asyncTest "hasMany associations are loaded from inline json", 3, ->
   @Store.find 2, (err, store) =>
     throw err if err
@@ -25,6 +34,16 @@ asyncTest "hasMany associations are loaded from inline json", 3, ->
     equal array.length, 1
     equal array[0].get('key'), 'SEO Title'
     equal array[0].get('id'), 5
+    QUnit.start()
+
+asyncTest "hasMany remove objects not found in new JSON", 2, ->
+  @Store.find 2, (err, store) =>
+    throw err if err
+    metafields = store.get('metafields')
+    array = metafields.toArray()
+    equal array.length, 1
+    store.fromJSON({metafields: []})
+    equal store.get('metafields.length'), 0
     QUnit.start()
 
 asyncTest "hasMany associations loaded from inline json should not trigger an implicit fetch", 2, ->
@@ -267,19 +286,20 @@ asyncTest "saved hasMany models should decode their child records based on ID", 
     equal thirty.get('key'), "SEO Handle"
     QUnit.start()
 
-asyncTest "integer-ish string IDs don't cause the associations to be loaded more than once", 4, ->
-  @Store.find 1, (err, store) ->
+asyncTest "integer-ish string IDs don't cause the associations to be loaded more than once", 5, ->
+  @Store.find 1, (err, store) =>
     throw err if err
     sm = store.get("stringyMetafields")
-    delay ->
+    delay =>
       equal sm.length, 2
       storeJSON = store.toJSON() # get those stringyMetafield ids as strings
       stringIds = storeJSON.stringyMetafields.map((p) -> p.id)
       strictEqual stringIds[0] , "1"
       strictEqual stringIds[1] , "2"
       store.fromJSON(storeJSON)
-      delay ->
-        equal sm.length, 2
+      delay =>
+        equal sm.length, 2, "reloading from JSON doesnt duplicate records"
+        equal @StringyMetafield.get('loaded.length'), 2, "The loaded set doesnt have duplicates"
 
 asyncTest "hasMany sets the foreign key on the inverse relation if the children haven't been loaded", 3, ->
   @Product.find 6, (err, product) =>

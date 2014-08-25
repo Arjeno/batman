@@ -15,18 +15,20 @@ class Batman.AssociationSet extends Batman.SetSort
     else
       loadOptions.data = Batman.extend(loadOptions.data, options)
 
-    return callback(undefined, @) unless @foreignKeyValue?
+    if !@foreignKeyValue?
+      callback?(undefined, @)
+      return Promise.resolve(@)
+
     @association.getRelatedModel().loadWithOptions loadOptions, (err, records, env) =>
       @markAsLoaded() unless err
-
-      callback(err, @, env)
+      callback?(err, @, env)
 
   _getLoadOptions: ->
     loadOptions = data: {}
     loadOptions.data[@association.foreignKey] = @foreignKeyValue
     if @association.options.url
       loadOptions.collectionUrl = @association.options.url
-      loadOptions.urlContext = @association.parentSetIndex().get(@foreignKeyValue)
+      loadOptions.urlContext = @get('parentRecord')
     loadOptions
 
   markAsLoaded: ->
@@ -34,23 +36,16 @@ class Batman.AssociationSet extends Batman.SetSort
     @fire('loaded')
 
   @accessor 'parentRecord', ->
-    parentClass =  @get('association.model')
-    parentPrimaryKey = parentClass.get('primaryKey')
-    parentPrimaryKeyValue = @get('foreignKeyValue')
-    query = {}
-    query[parentPrimaryKey] = parentPrimaryKeyValue
-    # pull it from the identity map, if it's there:
-    parentClass.createFromJSON(query)
+    @association.parentSetIndex().get(@foreignKeyValue)
 
   build: (attrs={}) ->
     initParams = {}
-    initParams[@get('association.foreignKey')] = @get('foreignKeyValue')
-    options = @get('association.options')
+    initParams[@association.foreignKey] = @foreignKeyValue
+    options = @association.options
     if options.inverseOf?
       initParams[options.inverseOf] = @get('parentRecord')
-    scope = options.namespace or Batman.currentApp
-    associatedClass = scope[options.name]
-    mixedAttrs = Batman.extend(attrs, initParams)
-    newObj = new associatedClass(mixedAttrs)
-    @add(newObj)
-    newObj
+    childClass = @association.getRelatedModel()
+    mixedAttrs = Batman.extend(initParams, attrs)
+    newChild = new childClass(mixedAttrs)
+    @add(newChild)
+    newChild

@@ -2,21 +2,16 @@
 
 class Batman.AssociationProxy extends Batman.Proxy
   loaded: false
-  @delegatesToTarget 'destroy', 'save', 'transaction', 'validate'
+  @delegatesToTarget 'toJSON', 'destroy', 'save', 'transaction', 'validate'
 
   constructor: (@association, @model) ->
     super()
-
-  toJSON: ->
-    target = @get('target')
-    @get('target').toJSON() if target?
 
   load: (callback) ->
     @fetch (err, proxiedRecord) =>
       unless err
         @_setTarget(proxiedRecord)
       callback?(err, proxiedRecord)
-    @get('target')
 
   loadFromLocal: ->
     return unless @_canLoad()
@@ -26,12 +21,19 @@ class Batman.AssociationProxy extends Batman.Proxy
 
   fetch: (callback) ->
     unless @_canLoad()
-      return callback(undefined, undefined)
-    record = @fetchFromLocal()
-    if record
-      return callback(undefined, record)
+      callback(undefined, undefined)
+      return Promise.reject(undefined)
+    if record = @fetchFromLocal()
+      callback(undefined, record)
+      return Promise.resolve(record)
     else
-      @fetchFromRemote(callback)
+      new Promise (fulfill, reject) =>
+        @fetchFromRemote (err, record) =>
+          callback?(err, record)
+          if err?
+            reject(err)
+          else
+            fulfill(record)
 
   @accessor 'loaded', Batman.Property.defaultAccessor
 
