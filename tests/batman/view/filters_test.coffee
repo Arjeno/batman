@@ -143,6 +143,14 @@ asyncTest 'truncate', 2, ->
       equal node.html(), "your "
       QUnit.start()
 
+asyncTest 'conditional renders differnt values depending on the bindings truthines', ->
+  context = Batman(record: true)
+  helpers.render '<div data-bind="record | conditional \'Yes\', \'No\'"></div>', context, (node, view) ->
+    equal node.html(), "Yes"
+    view.set('record', false)
+    equal node.html(), "No"
+    QUnit.start()
+
 asyncTest 'prepend', 2, ->
   context = Batman(foo: 'bar')
   helpers.render '<div data-bind="foo | prepend \'special-\'"></div>', context, (node, view) ->
@@ -761,7 +769,7 @@ asyncTest 'should render a user defined filter', 4, ->
     bar: 'baz'
   helpers.render '<div data-bind="foo | test 1, \'baz\'"></div>', ctx, (node) ->
     equal node.html(), "testValue"
-    equal Batman._functionName(spy.lastCallContext.constructor), 'View'
+    equal Batman.functionName(spy.lastCallContext.constructor), 'View'
     deepEqual spy.lastCallArguments.slice(0,3), ['bar', 1, 'baz']
     ok spy.lastCallArguments[3] instanceof Batman.DOM.AbstractBinding
     delete Batman.Filters.test

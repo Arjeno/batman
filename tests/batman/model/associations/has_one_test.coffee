@@ -1,5 +1,5 @@
-{createStorageAdapter, TestStorageAdapter, AsyncTestStorageAdapter} = window
-helpers = window.viewHelpers
+{createStorageAdapter, TestStorageAdapter, AsyncTestStorageAdapter} = if typeof require is 'undefined' then window else require '../model_helper'
+helpers = if typeof require is 'undefined' then window.viewHelpers else require '../../view/view_helper'
 
 QUnit.module "Batman.Model hasOne Associations",
   setup: ->
@@ -36,6 +36,14 @@ asyncTest "hasOne associations are loaded via ID", 2, ->
     delay ->
       equal product.get('id'), 1
       equal product.get('name'), 'Product One'
+
+asyncTest "::load returns a promise that resolves with the record", 2, ->
+  @Store.find 1, (err, store) =>
+    store.get('product').load()
+      .then (product) ->
+        equal product.get('id'), 1
+        equal product.get('name'), 'Product One'
+        QUnit.start()
 
 asyncTest "hasOne associations are not loaded when autoload is false", 2, ->
   ns = @namespace

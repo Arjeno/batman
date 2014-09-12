@@ -1,5 +1,5 @@
-{createStorageAdapter, TestStorageAdapter, AsyncTestStorageAdapter} = window
-helpers = window.viewHelpers
+{createStorageAdapter, TestStorageAdapter, AsyncTestStorageAdapter} = if typeof require is 'undefined' then window else require '../model_helper'
+helpers = if typeof require is 'undefined' then window.viewHelpers else require '../../view/view_helper'
 
 QUnit.module "Batman.Model belongsTo Associations",
   setup: ->
@@ -64,6 +64,15 @@ asyncTest "belongsTo associations are loaded via ID", 1, ->
       equal store.get('id'), 1
       QUnit.start()
 
+asyncTest "::load returns a promise that resolves with the record", 1, ->
+  @Product.find 1, (err, product) =>
+    throw err if err
+    product.get('store').load()
+      .then (store) ->
+        equal store.get('id'), 1
+      .then ->
+        QUnit.start()
+
 asyncTest "belongsTo associations are not loaded when autoload is off", 1, ->
   namespace = @
   class @Product extends Batman.Model
@@ -76,7 +85,7 @@ asyncTest "belongsTo associations are not loaded when autoload is off", 1, ->
   @Product.find 1, (err, product) =>
     store = product.get 'store'
     delay ->
-      ok !store.get('loaded')
+      ok !store.get('loaded'), "The store wasn't loaded automatically"
 
 asyncTest "belongsTo associations with autoload is off put the record at the property when loaded", 3, ->
   namespace = @
@@ -111,7 +120,7 @@ asyncTest "belongsTo association proxies index the local loaded set when autoloa
     @Store.load (err) =>
       throw err if err
       store = product.get 'store'
-      ok store instanceof @Store
+      ok store instanceof Batman.BelongsToProxy, "it returns a proxy even after loaded"
       QUnit.start()
 
 asyncTest "belongsTo associations are saved", 6, ->

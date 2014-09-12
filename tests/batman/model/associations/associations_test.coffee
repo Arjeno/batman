@@ -1,5 +1,5 @@
-{createStorageAdapter, TestStorageAdapter, AsyncTestStorageAdapter} = window
-helpers = window.viewHelpers
+{createStorageAdapter, TestStorageAdapter, AsyncTestStorageAdapter} = if typeof require is 'undefined' then window else require '../model_helper'
+helpers = if typeof require is 'undefined' then window.viewHelpers else require '../../view/view_helper'
 
 QUnit.module "Batman.Model Associations",
   setup: ->
@@ -125,7 +125,7 @@ asyncTest "support custom exensions which get applied before accessors or encode
 
   Product.find 2, (err, product) ->
     store = product.get('foo')
-    ok store instanceof namespace.Walmart
+    ok store instanceof namespace.Walmart, "The store is accessible as 'foo'"
     equal store.get('id'), 3
     QUnit.start()
 

@@ -1,5 +1,4 @@
-{createStorageAdapter, TestStorageAdapter, AsyncTestStorageAdapter, generateSorterOnProperty} = window
-helpers = window.viewHelpers
+{createStorageAdapter, TestStorageAdapter, AsyncTestStorageAdapter} = if typeof require is 'undefined' then window else require '../model_helper'
 {baseSetup} = if typeof require is 'undefined' then window.PolymorphicAssociationHelpers else require './polymorphic_association_helper'
 
 QUnit.module "Batman.Model polymorphic belongsTo associations",
@@ -19,6 +18,15 @@ asyncTest "belongsTo associations are loaded from remote", 4, ->
           ok product instanceof @Product
           equal product.get('id'), 1
           QUnit.start()
+
+asyncTest "::load returns a promise that resolves with the record", 1, ->
+  @Metafield.find 1, (err, metafield) =>
+    throw err if err
+    metafield.get('subject').load()
+      .then (store) ->
+        equal store.get('id'), 1
+      .then ->
+        QUnit.start()
 
 asyncTest "belongsTo associations are loaded from custom urls if specified", 2, ->
   @Metafield._batman.get('associations').get('subject').options.url = '/subject'
