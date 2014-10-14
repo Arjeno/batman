@@ -4,6 +4,14 @@ module.exports = class Query extends BatmanObject
   @OPTION_KEYS = ['limit', 'offset', 'order', 'where', 'distinct', 'action', 'uniq']
   @METHODS = @OPTION_KEYS.concat(['only', 'except'])
 
+  @Queryable =
+    initialize: ->
+      for name in Query.OPTION_KEYS
+        do (name) =>
+          @[name] = ->
+            query = new Query(this)
+            query["_#{name}"].apply(query, arguments)
+
   constructor: (@base, options = {}) ->
     options.where ||= {}
     @set('options', new Batman.Object(options))
@@ -11,7 +19,7 @@ module.exports = class Query extends BatmanObject
 
   duplicate: (block) ->
     options = Batman.mixin({}, @get('options').toJSON())
-    query = new Batman.Query(@base, options)
+    query = new @constructor(@base, options)
     block.call(query)
 
   where: (key, value) ->
@@ -94,13 +102,3 @@ module.exports = class Query extends BatmanObject
       constraints = key
 
     constraints
-
-Queryable =
-  initialize: ->
-    for name in Batman.Query.OPTION_KEYS
-      do (name) =>
-        @[name] = ->
-          query = new Batman.Query(this)
-          query["_#{name}"].apply(query, arguments)
-
-module.exports = Queryable

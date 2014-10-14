@@ -23,7 +23,7 @@ test "Query::where mixes in constraints to the existing list", ->
 
 test "Mixing in Queryable defines methods which return new Queries", ->
   class Test extends Batman.Object
-    @classMixin Batman.Queryable
+    @classMixin Batman.Query.Queryable
 
   query = Test.limit(5)
   params = query.toParams()
