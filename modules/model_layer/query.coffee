@@ -1,6 +1,6 @@
-#= require ../object
+{BatmanObject} = require 'foundation'
 
-class Batman.Query extends Batman.Object
+module.exports = class Query extends BatmanObject
   @OPTION_KEYS = ['limit', 'offset', 'order', 'where', 'distinct', 'action', 'uniq']
   @METHODS = @OPTION_KEYS.concat(['only', 'except'])
 
@@ -95,10 +95,12 @@ class Batman.Query extends Batman.Object
 
     constraints
 
-Batman.Queryable =
+Queryable =
   initialize: ->
     for name in Batman.Query.OPTION_KEYS
       do (name) =>
         @[name] = ->
           query = new Batman.Query(this)
           query["_#{name}"].apply(query, arguments)
+
+module.exports = Queryable

@@ -4,7 +4,7 @@ ErrorsSet = require './validations/errors_set'
 AssociationSet = require './associations/association_set'
 TransactionAssociationSet = require './transaction/transaction_association_set'
 AssociationCurator = require './associations/association_curator'
-Query = require './query'
+{Query, Queryable} = require './query'
 {
   BatmanObject, Property,
   SimpleHash, SimpleSet, Hash, Set,
@@ -14,7 +14,7 @@ Query = require './query'
 {helpers, DelegatingStateMachine, StateMachine} = require 'utilities'
 
 class Model extends BatmanObject
-  @classMixin Batman.Queryable
+  @classMixin Queryable
 
   # Override this property to define the key which storage adapters will use to store instances of this model under.
   #  - For RestStorage, this ends up being part of the url built to store this model

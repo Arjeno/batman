@@ -27,6 +27,7 @@ ModelLayer = {
   SessionStorage:             require './storage_adapters/session_storage'
   RestStorage:                require './storage_adapters/rest_storage'
 
+  Query:                      require './query'
   Transaction:                require './transaction/transaction'
   TransactionAssociationSet:  require './transaction/transaction_association_set'
 
